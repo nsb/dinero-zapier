@@ -1,27 +1,24 @@
 // We recommend writing your creates separate like this and rolling them
 // into the App definition at the end.
 module.exports = {
-  key: 'recipe',
+  key: 'invoice',
 
   // You'll want to provide some helpful display labels and descriptions
   // for users. Zapier will put them into the UX.
-  noun: 'Recipe',
+  noun: 'Invoice',
   display: {
-    label: 'Create Recipe',
-    description: 'Creates a new recipe.'
+    label: 'Create Invoice',
+    description: 'Creates a new invoice.'
   },
 
   // `operation` is where the business logic goes.
   operation: {
     inputFields: [
-      {key: 'name', required: true, type: 'string'},
-      {key: 'directions', required: true, type: 'text', helpText: 'Explain how should one make the recipe, step by step.'},
-      {key: 'authorId', required: true, type: 'integer', label: 'Author ID'},
-      {key: 'style', required: false, type: 'string', helpText: 'Explain what style of cuisine this is.'},
+      {key: 'organizationId', required: true, type: 'string'},
     ],
     perform: (z, bundle) => {
       const promise = z.request({
-        url: 'https://auth-json-server.zapier.ninja/recipes',
+        url: `https://api.dinero.dk/v1/${bundle.inputData.organizationId}/invoices`,
         method: 'POST',
         body: JSON.stringify({
           name: bundle.inputData.name,
@@ -35,7 +32,7 @@ module.exports = {
           // This is NOT how you normally do authentication. This is just to demo how to write a create here.
           // Refer to this doc to set up authentication:
           // https://zapier.github.io/zapier-platform-cli/#authentication
-          'X-API-Key': 'secret'
+          // 'X-API-Key': 'secret'
         }
       });
 
