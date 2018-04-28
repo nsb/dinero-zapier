@@ -1,23 +1,28 @@
-const redirectUri = 'https://zapier.com/dashboard/auth/oauth/return/App3884CLIAPI/';
+const redirectUri =
+  "https://zapier.com/dashboard/auth/oauth/return/App3884CLIAPI/";
 
 const getAccessToken = (z, bundle) => {
-  const promise = z.request('https://authz.dinero.dk/dineroapi/oauth/token', {
-    method: 'POST',
+  const clientIdSecret = `${process.env.CLIENT_ID}:${
+    process.env.CLIENT_SECRET
+  }`;
+  const encodedIdAndSecret = Buffer.from(clientIdSecret).toString("base64");
+  const promise = z.request("https://authz.dinero.dk/dineroapi/oauth/token", {
+    method: "POST",
     body: {
-      code: bundle.inputData.code,
-      client_id: process.env.CLIENT_ID,
-      client_secret: process.env.CLIENT_SECRET,
-      grant_type: 'authorization_code',
+      authorization_code: bundle.inputData.code,
+      grant_type: "authorization_code",
+      scope: "read write"
     },
     headers: {
-      'content-type': 'application/x-www-form-urlencoded'
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${encodedIdAndSecret}`
     }
   });
 
   // Needs to return at minimum, `access_token`, and if your app also does refresh, then `refresh_token` too
-  return promise.then((response) => {
+  return promise.then(response => {
     if (response.status !== 200) {
-      throw new Error('Unable to fetch access token: ' + response.content);
+      throw new Error("Unable to fetch access token: " + response.content);
     }
 
     const result = JSON.parse(response.content);
@@ -30,23 +35,23 @@ const getAccessToken = (z, bundle) => {
 
 const refreshAccessToken = (z, bundle) => {
   const promise = z.request(`${process.env.BASE_URL}/o/token/`, {
-    method: 'POST',
+    method: "POST",
     body: {
       refresh_token: bundle.authData.refresh_token,
-      client_id: '{{process.env.CLIENT_ID}}',
+      client_id: "{{process.env.CLIENT_ID}}",
       client_secret: process.env.CLIENT_SECRET,
-      grant_type: 'refresh_token'
+      grant_type: "refresh_token"
     },
     headers: {
-      'content-type': 'application/x-www-form-urlencoded'
+      "content-type": "application/x-www-form-urlencoded"
     }
   });
 
   // Needs to return `access_token`. If the refresh token stays constant, can skip it. If it changes, can
   // return it here to update the user's auth on Zapier.
-  return promise.then((response) => {
+  return promise.then(response => {
     if (response.status !== 200) {
-      throw new Error('Unable to fetch access token: ' + response.content);
+      throw new Error("Unable to fetch access token: " + response.content);
     }
 
     const result = JSON.parse(response.content);
@@ -60,37 +65,37 @@ const testAuth = (z /*, bundle*/) => {
   // Normally you want to make a request to an endpoint that is either specifically designed to test auth, or one that
   // every user will have access to, such as an account or profile endpoint like /me.
   const promise = z.request({
-    method: 'GET',
-    url: `${process.env.BASE_URL}/${process.env.API_VERSION}/users/me/`,
+    method: "GET",
+    url: `${process.env.BASE_URL}/${process.env.API_VERSION}/users/me/`
   });
 
   // This method can return any truthy value to indicate the credentials are valid.
   // Raise an error to show
-  return promise.then((response) => {
+  return promise.then(response => {
     if (response.status === 401) {
-      throw new Error('The access token you supplied is not valid');
+      throw new Error("The access token you supplied is not valid");
     }
     if (response.status === 403) {
-      throw new Error('The access token you supplied is not valid');
+      throw new Error("The access token you supplied is not valid");
     }
     return response;
   });
 };
 
 module.exports = {
-  type: 'oauth2',
+  type: "oauth2",
   oauth2Config: {
     // Step 1 of the OAuth flow; specify where to send the user to authenticate with your API.
     // Zapier generates the state and redirect_uri, you are responsible for providing the rest.
     // Note: can also be a function that returns a string
     authorizeUrl: {
-      url: 'https://authz.dinero.dk/dineroapi/oauth/authorize',
+      url: "https://authz.dinero.dk/dineroapi/oauth/authorize",
       params: {
-        client_id: '{{process.env.CLIENT_ID}}',
-        state: '{{bundle.inputData.state}}',
-        redirect_uri: '{{bundle.inputData.redirect_uri}}',
-        response_type: 'code',
-        scope: 'read write'
+        client_id: "{{process.env.CLIENT_ID}}",
+        state: "{{bundle.inputData.state}}",
+        redirect_uri: "{{bundle.inputData.redirect_uri}}",
+        response_type: "code",
+        scope: "read write"
       }
     },
     // Step 2 of the OAuth flow; Exchange a code for an access token.
